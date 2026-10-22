@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>雲端安全模擬器 Cloud Security Simulator</title>
+<title></title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:"Microsoft JhengHei","PingFang TC",Arial,sans-serif;font-size:14px;color:#1f2329;background:#f2f4f7}
@@ -75,13 +75,13 @@ details.help summary{cursor:pointer;color:#1366ec;font-weight:600}
 details.help ul{margin:8px 0 0 18px;padding:0}
 .adv{display:inline-block;border-radius:10px;padding:1px 8px;font-size:12px;color:#fff}
 .adv-close{background:#d93026}.adv-limit,.adv-internal,.adv-dns{background:#e8a200}.adv-open{background:#2ba471}.adv-unk{background:#6b7280}
-#hintpanel,#toast{position:fixed;z-index:40;background:#fff;border:1px solid #c9ced6;border-radius:6px;box-shadow:0 6px 22px rgba(0,0,0,.25);padding:12px 14px;max-width:360px;display:none}
-#hintpanel{left:14px;bottom:14px;border-left:5px solid #1366ec}
+#hintpanel{display:none;background:#f4f8ff;border:1px solid #c9dcff;border-left:5px solid #1366ec;border-radius:4px;padding:10px 12px;margin-top:10px}
+#toast{position:fixed;z-index:40;background:#fff;border:1px solid #c9ced6;border-radius:6px;box-shadow:0 6px 22px rgba(0,0,0,.25);padding:12px 14px;max-width:360px;display:none}
 #toast{right:14px;bottom:14px;border-left:5px solid #2ba471}
 #hintpanel p,#toast p{margin:6px 0}
 .hp-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
 #tourhole{position:fixed;display:none;border-radius:6px;box-shadow:0 0 0 9999px rgba(10,15,30,.62);pointer-events:none;z-index:50;border:2px solid #ff6a00}
-#tourbox{position:fixed;display:none;z-index:60;background:#fff;border-radius:6px;padding:14px;width:380px;max-width:calc(100% - 24px);box-shadow:0 8px 28px rgba(0,0,0,.4)}
+#tourbox{position:fixed;display:none;z-index:60;background:#fff;border-radius:6px;padding:14px;width:380px;max-width:calc(100% - 24px);max-height:calc(100vh - 16px);overflow:auto;box-shadow:0 8px 28px rgba(0,0,0,.4)}
 #tourbox ul{margin:8px 0 8px 18px;padding:0}
 #tourbox .tb{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
 table.plain td,table.plain th{padding:6px 8px;font-size:13px}
@@ -95,13 +95,12 @@ table.plain td,table.plain th{padding:6px 8px;font-size:13px}
  .side .chk{display:none}
  .main{padding:10px}
  table{display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
- #hintpanel,#toast{max-width:calc(100% - 28px)}
+ #toast{max-width:calc(100% - 28px)}
 }
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div id="hintpanel"></div>
 <div id="toast"></div>
 <div id="tourhole"></div>
 <div id="tourbox"></div>
@@ -110,13 +109,14 @@ table.plain td,table.plain th{padding:6px 8px;font-size:13px}
 
 /* ========== i18n：所有介面文字集中在此；日後新增 I18N['en'] 即可切換語言 ========== */
 const I18N={'zh-Hant':{
-title:'雲端安全模擬器',sub:'模擬器，與阿里雲無關',foot:'本頁沒有連接任何真實雲端服務，所有流量、費用及攻擊均為模擬。',
+title:'雲端安全模擬器','doc.title':'雲端安全模擬器 Cloud Security Simulator',sub:'模擬器，與阿里雲無關',foot:'本頁沒有連接任何真實雲端服務，所有流量、費用及攻擊均為模擬。',
+'ui.colon':'：',
 'srv.web':'網站伺服器','srv.api':'API 閘道','srv.ai':'AI 聊天機械人 App','srv.db':'資料庫 (RDS)','srv.dns':'域名解析 (DNS)',
 st_ok:'運行中',st_warn:'警告',st_bad:'異常',st_off:'已離線',layer_net:'網絡層',layer_app:'應用層',
 'diff.easy':'簡單','diff.normal':'普通','diff.hard':'困難',
-'diffdesc.easy':'同時 1 個攻擊、間隔較長；免費三級提示；日誌附中文說明；誤操作扣分減半。',
-'diffdesc.normal':'同時最多 2 個攻擊；免費兩級提示；日誌附中文說明。',
-'diffdesc.hard':'同時最多 2 個攻擊、間隔較短；提示每級扣 3 分；日誌沒有中文說明。',
+'diffdesc.easy':'300 秒；5 個攻擊；間隔 45–60 秒；同時 1 個；冷卻 10 秒；免費三級提示、中文日誌註解及來源 IP 排行；誤操作扣分減半；速度獎勵每 6 秒減 1 分。',
+'diffdesc.normal':'300 秒；7 個攻擊；間隔 30–45 秒；同時最多 2 個；免費兩級提示；中文日誌註解及來源 IP 排行；速度獎勵每 4 秒減 1 分。',
+'diffdesc.hard':'300 秒；9 個攻擊；間隔 20–35 秒；同時最多 2 個；兩級提示每級 -3 分；不顯示日誌中文註解、關鍵詞高亮及來源 IP 排行；速度獎勵每 3 秒減 1 分。',
 'tool.fw':'VPC 防火牆 (Firewall)','tool.sg':'安全組 (Security Group / Port)','tool.eip':'彈性公網 IP (EIP) / NAT 網關','tool.dns':'雲解析 DNS',
 'tool.rl':'限流 (Rate Limiting)','tool.lg':'日誌設定 (Logging)','tool.pr':'提示規則 (Prompt Rules)','tool.cost':'費用監察 (Cost Monitoring)',
 'term.cidr':'CIDR：表示一個 IP 網段，例如 203.0.113.0/24；0.0.0.0/0 代表全世界。',
@@ -133,7 +133,7 @@ st_ok:'運行中',st_warn:'警告',st_bad:'異常',st_off:'已離線',layer_net:
 'atk.ddos.h3':'開啟「啟用流量防護」，「超過閾值時」選「封鎖異常流量」，閾值設為 300 Mbps 或以下（正常約 40 Mbps，不可低於 50）。',
 'atk.portscan.h1':'日誌顯示同一個 IP 逐一嘗試多個不同的埠 (Port)。',
 'atk.portscan.h2':'應到網站伺服器 web-01 的安全組，檢查哪些埠不應對全世界開放。',
-'atk.portscan.h3':'在 web-01 的安全組，刪除（或限制來源）TCP 21、TCP 23 及 UDP 161 的規則，保留 TCP 80 及 443，然後按「套用」。',
+'atk.portscan.h3':'在 web-01 的安全組，刪除（或限制來源）TCP 21 及 TCP 23 的規則，保留 TCP 80 及 443，然後按「套用」。',
 'atk.ssh.h1':'日誌出現大量 SSH 登入失敗記錄。',
 'atk.ssh.h2':'應到 web-01 的安全組，限制 22 埠 (SSH) 的來源 IP。',
 'atk.ssh.h3':'在 web-01 的安全組，將 TCP 22 的來源由 0.0.0.0/0 改為 203.0.113.0/24（學校網段），然後按「套用」。',
@@ -175,7 +175,7 @@ st_ok:'運行中',st_warn:'警告',st_bad:'異常',st_off:'已離線',layer_net:
 'atk.leak.ln':'說明：日誌中出現明文電話或電郵，有個人資料外洩風險。',
 /* 工具說明（用「|」分隔：用途 | 重要欄位 | 常見錯誤） */
 'guide.fw':'用途：保護整個 VPC 的進出流量，流量超標時發出告警或封鎖。|重要欄位：啟用流量防護、流量閾值 (Mbps)、超過閾值時的動作。|常見錯誤：只選「僅發出告警」不會阻止攻擊；閾值低於正常流量（約 40 Mbps）會誤擋正常用戶。',
-'guide.sg':'用途：決定哪些來源可以連到這部伺服器的哪個埠 (Port)，屬於實例層級的虛擬防火牆。|重要欄位：協定 (TCP / UDP)、埠、允許來源 (CIDR)。0.0.0.0/0 代表全世界。|常見錯誤：開放不必要的埠、把管理用的 22 埠對全世界開放，或誤刪網站需要的 80、443 埠。',
+'guide.sg':'用途：決定哪些來源可以透過 TCP 連到這部伺服器的哪個埠 (Port)，屬於實例層級的虛擬防火牆。|重要欄位：埠、允許來源 (CIDR)。0.0.0.0/0 代表全世界。|常見錯誤：開放不必要的埠、把管理用的 22 埠對全世界開放，或誤刪網站需要的 80、443 埠。',
 'guide.eip':'用途：EIP 令資源擁有公網地址；NAT 網關讓私有資源單向對外上網。|重要欄位：綁定 EIP、經 NAT 網關上網 (SNAT)。|常見錯誤：資料庫綁定了 EIP；網站伺服器誤解除 EIP 令用戶無法訪問。',
 'guide.dns':'用途：把網址（域名）對應到 IP 位址。|重要欄位：主機記錄、類型 (A)、記錄值。|常見錯誤：記錄值指向不是自己擁有的 IP，用戶會被導向假網站。',
 'guide.rl':'用途：限制每名用戶單位時間內的請求數，超出時回應 429 Too Many Requests。|重要欄位：啟用限流、每用戶每分鐘上限。|常見錯誤：上限太高無法阻止濫發；低於 5 則會誤擋正常用戶。',
@@ -186,12 +186,10 @@ st_ok:'運行中',st_warn:'警告',st_bad:'異常',st_off:'已離線',layer_net:
 /* 埠速查 */
 'port.tcp/21':'FTP：傳送檔案，帳號密碼以明文傳送','port.tcp/22':'SSH：遠端登入及管理伺服器','port.tcp/23':'Telnet：明文遠端登入，已被 SSH 取代',
 'port.tcp/80':'HTTP：一般網頁','port.tcp/443':'HTTPS：加密網頁','port.tcp/3306':'MySQL：資料庫連線',
-'port.udp/53':'DNS：域名查詢','port.udp/123':'NTP：時間同步','port.udp/161':'SNMP：設備監控協定，常被濫用',
 'port.unknown':'未列於速查表',
-'adv.close':'建議關閉','adv.limit':'限制來源 IP','adv.open':'可對外開放','adv.internal':'只限內網','adv.dns':'僅 DNS 伺服器需對外','adv.unk':'自行評估',
-'sg.tcpudp':'TCP：先建立連線再傳資料，較可靠，例如網頁、SSH。UDP：不建立連線直接傳送，較快但沒有確認，例如 DNS 查詢、時間同步。',
-'sg.ref':'常見埠速查表','sg.refnote':'同一個埠號可以有 TCP 與 UDP 兩種協定，規則要分開設定。',
-'th.proto':'協定','th.port':'埠 (Port)','th.src':'允許來源 (CIDR)','th.use':'用途','th.adv':'建議','th.name':'名稱 / 用途',
+'adv.close':'建議關閉','adv.limit':'限制來源 IP','adv.open':'可對外開放','adv.internal':'只限內網','adv.unk':'自行評估',
+'sg.ref':'常見埠速查表','sg.refnote':'安全組埠規則只支援 TCP。',
+'th.port':'埠 (Port)','th.src':'允許來源 (CIDR)','th.use':'用途','th.adv':'建議','th.name':'名稱 / 用途',
 /* 通用按鈕 */
 'btn.apply':'套用','btn.reset':'重設為預設值','btn.del':'刪除','btn.addrule':'＋ 新增規則','btn.submit':'提交','btn.manage':'管理','btn.back':'返回列表',
 /* 開始畫面 */
@@ -201,13 +199,13 @@ st_ok:'運行中',st_warn:'警告',st_bad:'異常',st_off:'已離線',layer_net:
 'start.l3':'每局 5 分鐘，第 15 秒出現第一個攻擊。難度越高，攻擊越密集。',
 'start.l4':'相同「種子」及難度會出現相同的攻擊次序，同班同學可使用相同種子比較分數。',
 'start.l5':'所有流量、費用均為模擬數字。排行榜只儲存在這部電腦的瀏覽器內，只使用暱稱及班別代碼。',
-'start.nick':'暱稱（最多 12 字）','start.nickph':'例如：小明','start.cls':'班別代碼（可留空）','start.clsph':'例如：4A','start.seed':'種子 (Seed)',
+'start.nick':'暱稱（最多 12 字）','start.nickph':'例如：小明','start.cls':'班別代碼（可留空）','start.clsph':'例如：4A','start.seed':'種子 (Seed)','start.defaultnick':'同學',
 'start.diff':'難度','start.mode':'模式','start.play':'正式模擬（計分）','start.practice':'練習模式（不計時、不計分）','start.tut':'教學模式','start.tutl':'開啟步驟引導',
 'start.go':'開始','start.tour':'介面導覽','start.tourdone':'介面導覽（已完成，可重溫）','start.tourhint':'第一次使用？建議先完成介面導覽，了解每個畫面及工具。',
 'start.lb':'排行榜（本機 Top 10）',
 /* 頂部列 */
 'top.home':'首頁','top.seed':'種子','top.diff':'難度','top.left':'剩餘','top.hp':'平均健康度','top.budget':'預算','top.score':'得分','top.end':'結束','top.leave':'離開練習',
-'top.practice':'練習模式','top.pick':'選擇攻擊','top.trigger':'觸發攻擊','top.font':'A+','top.fonttip':'放大／縮小字體','top.demo':'介面導覽（示範資料）',
+'top.practice':'練習模式','top.pick':'選擇攻擊','top.trigger':'觸發攻擊','top.font':'A+','top.fonttip':'放大／縮小字體','top.demo':'介面導覽（示範資料）','prac.duplicate':'此攻擊仍在進行，不能重複觸發。',
 /* 首頁 */
 'home.h':'雲服務器 ECS / 資源列表','home.name':'名稱 / ID','home.status':'狀態','home.type':'類型 / 規格','home.pub':'公網 IP','home.priv':'私網 IP','home.hp':'健康度','home.cpu':'CPU','home.op':'操作',
 'home.noeip':'（無公網 IP）','home.notes':'事件通知','home.nonote':'暫時沒有告警。','home.resolved':'（已處理）',
@@ -216,7 +214,7 @@ note:'實例 {id} 觸發異常告警，請檢查監控與日誌。',
 'con.g1':'監控與診斷','con.g2':'安全與管理工具','con.mon':'概覽監控 (Dashboard)','con.logs':'日誌查看 (Logs)','con.report':'回報事件',
 'con.pub':'公網','con.priv':'私網','con.hp':'健康度',
 'chk.h':'診斷四步','chk.1':'1. 看圖表：哪項指標變紅？','chk.2':'2. 看日誌：有沒有 WARN / ALERT？','chk.3':'3. 判斷攻擊類型並回報','chk.4':'4. 選工具、改設定、按「套用」',
-'hint.free':'提示（免費）','hint.cost':'提示（每級 -{n} 分）','hint.h':'提示','hint.none':'這部伺服器目前沒有偵測到事件。',
+'hint.free':'提示（免費）','hint.cost':'提示（每級 -{n} 分）','hint.h':'提示','hint.none':'這部伺服器目前沒有偵測到事件。','hint.level':'第 {n} 級',
 'hint.other':'這部伺服器沒有異常。請返回首頁，查看狀態為「警告」的資源。',
 'hint.more':'再按「提示」可顯示下一級。','hint.lv3warn':'再按一次會顯示具體設定，並令此攻擊失去速度獎勵。','hint.max':'已顯示所有提示。',
 /* 圖表 */
@@ -231,7 +229,7 @@ note:'實例 {id} 觸發異常告警，請檢查監控與日誌。',
 'rep.ok':'判斷正確（+20 分）。請在左側選單找出可阻止此攻擊的工具。','rep.bad':'回報與目前此伺服器的事件不符。請再檢查監控圖表及日誌。',
 /* 工具表單 */
 'f.fw.note':'VPC 防火牆保護整個虛擬私有網絡 (VPC) 的進出流量。','f.fw.en':'啟用流量防護','f.fw.thr':'流量閾值 (Mbps)','f.fw.act':'超過閾值時','f.fw.alert':'僅發出告警','f.fw.block':'封鎖異常流量',
-'f.sg.note':'安全組是單一實例的虛擬防火牆。每條入站規則決定哪個來源可連線至哪個協定及埠。',
+'f.sg.note':'安全組是單一實例的虛擬防火牆。每條入站規則決定哪個來源可透過 TCP 連線至哪個埠。',
 'f.eip.note':'EIP 令資源擁有公網地址，可被互聯網直接連線。NAT 網關則讓私有資源單向對外上網，外界無法主動連入。','f.eip.st':'EIP 狀態','f.eip.bound':'已綁定 {ip}','f.eip.unbound':'未綁定',
 'f.eip.bind':'綁定 EIP','f.eip.nat':'經 NAT 網關上網 (SNAT)',
 'f.dns.note':'網域：school-app.example。DNS 記錄決定網址對應哪個 IP。','f.dns.host':'主機記錄','f.dns.type':'類型','f.dns.val':'記錄值','f.dns.tip':'提示：你的網站伺服器 web-01 的公網 IP 可在首頁列表查看。',
@@ -244,11 +242,16 @@ note:'實例 {id} 觸發異常告警，請檢查監控與日誌。',
 /* 套用結果與驗證 */
 'apply.ok':'已套用「{label}」。','apply.solved':'已套用「{label}」。設定已生效，有 {n} 個攻擊被阻止。','apply.nofix':'已套用「{label}」，但沒有阻止任何目前的攻擊。請再檢查診斷結果及所選工具。',
 'val.thr':'閾值無效','val.num':'請輸入有效數字','val.port':'請輸入有效的埠 (1–65535) 及來源',
+'val.sg':'請輸入 1–65535 的整數埠及有效 IPv4 CIDR 來源。',
 'lbl.fw':'VPC 防火牆','lbl.sg':'安全組','lbl.eip':'EIP / NAT','lbl.dns':'DNS 記錄','lbl.rl':'限流','lbl.pr':'提示規則','lbl.cost':'費用監察','lbl.lg':'日誌設定',
 /* 事件記錄 */
 'ev.solved':'解決：{n}（+30，速度獎勵 +{b}）','ev.repok':'回報正確：{n}','ev.repbad':'回報錯誤','ev.hint':'使用提示','ev.off':'伺服器 {id} 已離線',
-'ev.fw':'防火牆閾值過低，誤擋正常流量','ev.rl':'限流過嚴，正常用戶被誤擋 (429)','ev.web':'網站 80/443 埠被關閉，正常用戶無法訪問','ev.eipweb':'網站伺服器失去公網地址，用戶無法訪問',
-'ev.db':'資料庫 3306 埠對全世界開放','ev.dnsapi':'api 記錄被改成錯誤 IP','ev.lgoff':'停用日誌，之後無法審計及追查',
+'ev.fw':'防火牆閾值過低，誤擋正常流量','ev.rl':'限流過嚴，正常用戶被誤擋 (429)','ev.web':'網站 TCP 80 或 443 埠未對外開放，正常用戶無法訪問',
+'ev.apiweb':'api-gw 的 TCP 443 埠未對外開放，API 無法訪問','ev.aiweb':'ai-bot 的 TCP 443 埠未允許內部網絡連線，AI 應用無法被內部呼叫',
+'ev.dbinternal':'db-01 的 TCP 3306 埠未允許內部網絡連線，應用無法連接資料庫','ev.db':'資料庫 3306 埠對全世界開放',
+'ev.eipweb':'網站伺服器失去公網地址，用戶無法訪問','ev.dnsbad':'DNS 的 www 或 api 記錄錯誤，網址解析到不正確的 IP',
+'ev.prshort':'AI 輸入長度上限低於 100 字元，正常提問會被截斷','ev.coststop':'費用預算低於 HK$20 並設定超額停止服務，服務可能很快停止',
+'ev.lgoff':'停用日誌，之後無法審計及追查',
 'toast.h':'已解決：{n}','toast.why':'為甚麼這樣做？','toast.close':'關閉',
 /* 教學模式 */
 tut0:'教學模式：模擬已開始。請留意下方「伺服器列表」，當有伺服器狀態變為「警告」，即可能受到攻擊。',
@@ -284,6 +287,7 @@ tut3:'步驟 3：已回報。請在左側選單找出可以阻止此攻擊的工
 }};
 let lang='zh-Hant';
 function t(k,p){let s=(I18N[lang]&&I18N[lang][k])||I18N['zh-Hant'][k]||k;if(p)for(const x in p)s=s.split('{'+x+'}').join(p[x]);return s}
+document.title=t('doc.title');
 
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=s=>document.querySelector(s);
@@ -299,19 +303,25 @@ const term=k=>`<abbr title="${esc(t('term.'+k))}">${{cidr:'CIDR',eip:'EIP',nat:'
 /* ========== 參數 ========== */
 const GAME_SEC=300,START_BUDGET=400,FIRST_AT=15,RECOVER=1;
 const DIFF={
- easy:{quota:5,gap:[45,60],maxActive:1,cool:10,drain:.15,hintLv:3,hintCost:0,annot:true,advice:true,pen:.5,speed:6,feedback:true,merge:true,ip:true,dot:true,kw:true},
- normal:{quota:7,gap:[30,45],maxActive:2,cool:0,drain:.25,hintLv:2,hintCost:0,annot:true,advice:true,pen:1,speed:4,feedback:true,merge:true,ip:true,dot:true,kw:true},
+ easy:{quota:5,gap:[45,60],maxActive:1,cool:10,drain:.15,hintLv:3,hintCost:0,annot:true,advice:true,pen:.5,speed:6,feedback:true,merge:false,ip:true,dot:true,kw:true},
+ normal:{quota:7,gap:[30,45],maxActive:2,cool:0,drain:.25,hintLv:2,hintCost:0,annot:true,advice:true,pen:1,speed:4,feedback:true,merge:false,ip:true,dot:true,kw:true},
  hard:{quota:9,gap:[20,35],maxActive:2,cool:0,drain:.35,hintLv:2,hintCost:3,annot:false,advice:false,pen:1,speed:3,feedback:false,merge:false,ip:false,dot:false,kw:false}
 };
 const openSrc=s=>['0.0.0.0/0','0.0.0.0','*','any'].includes(String(s).trim().toLowerCase());
+function validCidr(value){
+ const parts=String(value).trim().split('/');
+ if(parts.length>2)return false;
+ const octets=parts[0].split('.');
+ if(octets.length!==4||octets.some(x=>!/^\d{1,3}$/.test(x)||Number(x)>255))return false;
+ return parts.length===1||(/^\d{1,2}$/.test(parts[1])&&Number(parts[1])<=32);
+}
 const mmss=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
 
-/* ========== 埠與協定 ========== */
-const PORTS={'tcp/21':'close','tcp/22':'limit','tcp/23':'close','tcp/80':'open','tcp/443':'open','tcp/3306':'internal','udp/53':'dns','udp/123':'internal','udp/161':'close'};
-const BADKEYS=['tcp/21','tcp/23','udp/161'];
-const pk=r=>r.proto+'/'+r.port;
-const SCAN_PORTS=[[23,'tcp'],[21,'tcp'],[161,'udp'],[3389,'tcp'],[8080,'tcp'],[445,'tcp'],[6379,'tcp'],[25,'tcp']];
-function sgInfo(proto,port){const k=proto+'/'+port;return PORTS[k]?{use:t('port.'+k),adv:PORTS[k]}:{use:t('port.unknown'),adv:'unk'}}
+/* ========== 安全組埠資料 ========== */
+const PORTS={21:'close',22:'limit',23:'close',80:'open',443:'open',3306:'internal'};
+const BAD_PORTS=[21,23];
+const SCAN_PORTS=[23,21,3389,8080,445,6379,25];
+function sgInfo(port){const k='tcp/'+port;return PORTS[port]?{use:t('port.'+k),adv:PORTS[port]}:{use:t('port.unknown'),adv:'unk'}}
 
 /* ========== 攻擊定義 ========== */
 const ATK={
@@ -320,10 +330,10 @@ ddos:{layer:'net',target:'web-01',tool:'fw',eff:{'web-01':{net:850,cpu:55,req:22
  fixed:()=>G.fw.enabled&&G.fw.action==='block'&&G.fw.thr<=300},
 portscan:{layer:'net',target:'web-01',tool:'sg',eff:{'web-01':{net:25,cpu:12,req:60}},
  log:a=>{const p=SCAN_PORTS[ri(0,SCAN_PORTS.length-1)];return `WARN  connection attempt dst_port=${p[0]}/${p[1]} src=${a.ip} flags=SYN (sequential ports)`},
- fixed:()=>sv('web-01').cfg.sg.every(r=>!BADKEYS.includes(pk(r))||!openSrc(r.src))},
+ fixed:()=>sv('web-01').cfg.sg.every(r=>!BAD_PORTS.includes(r.port)||!openSrc(r.src))},
 ssh:{layer:'net',target:'web-01',tool:'sg',eff:{'web-01':{cpu:30,req:80}},
  log:a=>`WARN  sshd: Failed password for ${['root','admin','ubuntu','test'][ri(0,3)]} from ${a.ip} port ${ri(30000,60000)} ssh2`,
- fixed:()=>sv('web-01').cfg.sg.every(r=>!(r.proto==='tcp'&&r.port===22)||!openSrc(r.src))},
+ fixed:()=>sv('web-01').cfg.sg.every(r=>r.port!==22||!openSrc(r.src))},
 dbexpose:{layer:'net',target:'db-01',tool:'eip',eff:{'db-01':{net:45,cpu:35,req:300}},
  log:a=>`WARN  mysqld: auth failed user=root host=${a.ip} (public EIP 203.0.113.50:3306 reachable from Internet)`,
  fixed:()=>!sv('db-01').cfg.eip.bound},
@@ -348,36 +358,38 @@ const ATK_KEYS=Object.keys(ATK);
 
 /* ========== 遊戲狀態 ========== */
 let G=null;
+let toastTimer=null;
 function sv(id){return G.servers.find(s=>s.id===id)}
 function makeServers(){
  const base=o=>{o.def=clone(o.cfg);return Object.assign({health:100,off:false,hist:{net:[],req:[],cpu:[],cost:[]},logs:[],cur:{net:0,req:0,cpu:0,cost:0},sus:0,susSeen:0},o)};
- const rule=(proto,port,src)=>({proto,port,src});
+ const rule=(port,src)=>({port,src});
  return [
  base({id:'web-01',nk:'srv.web',type:'ECS',spec:'ecs.c6.large · 2 vCPU 4 GiB',ip:'203.0.113.10',priv:'10.0.1.10',tools:['fw','sg','eip','lg'],b:{net:40,req:300,cpu:25},
-  cfg:{sg:[rule('tcp',22,'0.0.0.0/0'),rule('tcp',80,'0.0.0.0/0'),rule('tcp',443,'0.0.0.0/0'),rule('tcp',23,'0.0.0.0/0'),rule('tcp',21,'0.0.0.0/0'),rule('udp',161,'0.0.0.0/0')],eip:{bound:true,ip:'203.0.113.10',nat:false},lg:{enabled:true,mask:false,days:7}}}),
+  cfg:{sg:[rule(22,'0.0.0.0/0'),rule(80,'0.0.0.0/0'),rule(443,'0.0.0.0/0'),rule(23,'0.0.0.0/0'),rule(21,'0.0.0.0/0')],eip:{bound:true,ip:'203.0.113.10',nat:false},lg:{enabled:true,mask:false,days:7}}}),
  base({id:'api-gw',nk:'srv.api',type:'ECS',spec:'ecs.c6.large · 2 vCPU 4 GiB',ip:'203.0.113.20',priv:'10.0.1.20',tools:['fw','sg','rl','lg'],b:{net:30,req:500,cpu:25},
-  cfg:{sg:[rule('tcp',443,'0.0.0.0/0'),rule('tcp',22,'203.0.113.0/24')],rl:{enabled:false,limit:100},lg:{enabled:true,mask:false,days:7}}}),
+  cfg:{sg:[rule(443,'0.0.0.0/0'),rule(22,'203.0.113.0/24')],rl:{enabled:false,limit:100},lg:{enabled:true,mask:false,days:7}}}),
  base({id:'ai-bot',nk:'srv.ai',type:'ECS',spec:'ecs.g6.xlarge · 4 vCPU 16 GiB',ip:'—',priv:'10.0.2.10',tools:['sg','rl','pr','cost','lg'],b:{net:15,req:120,cpu:30},
-  cfg:{sg:[rule('tcp',443,'10.0.0.0/16'),rule('tcp',22,'203.0.113.0/24')],rl:{enabled:false,limit:100},pr:{scope:false,block:false,maxLen:2000,kw:''},cost:{budget:0,alert:80,action:'none'},lg:{enabled:true,mask:false,days:7}}}),
+  cfg:{sg:[rule(443,'10.0.0.0/16'),rule(22,'203.0.113.0/24')],rl:{enabled:false,limit:100},pr:{scope:false,block:false,maxLen:2000,kw:''},cost:{budget:0,alert:80,action:'none'},lg:{enabled:true,mask:false,days:7}}}),
  base({id:'db-01',nk:'srv.db',type:'RDS',spec:'mysql.n2.medium · 2 vCPU 4 GiB',ip:'203.0.113.50',priv:'10.0.3.10',tools:['sg','eip','lg'],b:{net:5,req:80,cpu:20},
-  cfg:{sg:[rule('tcp',3306,'10.0.0.0/16')],eip:{bound:true,ip:'203.0.113.50',nat:false},lg:{enabled:true,mask:false,days:7}}}),
+  cfg:{sg:[rule(3306,'10.0.0.0/16')],eip:{bound:true,ip:'203.0.113.50',nat:false},lg:{enabled:true,mask:false,days:7}}}),
  base({id:'dns-zone',nk:'srv.dns',type:'DNS',spec:'school-app.example',ip:'—',priv:'—',tools:['dns','lg'],b:{net:2,req:200,cpu:10},
   cfg:{dns:[{host:'www',type:'A',value:'203.0.113.10'},{host:'api',type:'A',value:'203.0.113.20'}],lg:{enabled:true,mask:false,days:7}}})
  ];
 }
 function newGame(o){
- const rng=mulberry32(hashSeed(o.seed+'|'+o.diff)),D=Object.assign({},DIFF[o.diff]);
- if(o.practice){D.drain=.1;D.maxActive=3;D.cool=0}
+ const diff=o.practice?'easy':o.diff;
+ const rng=mulberry32(hashSeed(o.seed+'|'+diff)),D=Object.assign({},DIFF[diff]);
  const net=shuf(ATK_KEYS.filter(k=>ATK[k].layer==='net'),rng),app=shuf(ATK_KEYS.filter(k=>ATK[k].layer==='app'),rng);
- const alt=[];let i=0,j=0,turn=rng()<.5;
+ const order=[];let i=0,j=0,turn=rng()<.5;
  while(i<net.length||j<app.length){
-  if(turn&&i<net.length)alt.push(net[i++]);else if(!turn&&j<app.length)alt.push(app[j++]);else if(i<net.length)alt.push(net[i++]);else alt.push(app[j++]);
-  turn=!turn;
+  if((turn&&i<net.length)||j>=app.length)order.push(net[i++]);
+  else order.push(app[j++]);
+  if(i<net.length&&j<app.length)turn=!turn;
  }
- const queue=shuf(alt.slice(0,D.quota),rng);
- G={seed:o.seed,diff:o.diff,D,rng,nick:o.nick||'',cls:o.cls||'',tut:!!o.tut,practice:!!o.practice,demo:!!o.demo,t:0,servers:makeServers(),
+ const queue=order.slice(0,D.quota);
+ G={seed:o.seed,diff,D,rng,nick:o.nick||'',cls:o.cls||'',tut:!!o.tut,practice:!!o.practice,demo:!!o.demo,t:0,servers:makeServers(),
   fw:{enabled:false,thr:1000,action:'alert'},fwDef:{enabled:false,thr:1000,action:'alert'},queue,total:queue.length,nextSpawn:FIRST_AT,lastFix:-999,
-  attacks:[],score:0,spent:0,events:[],notes:[],view:'home',cur:null,tab:'mon',firstAtk:null,over:false,reason:'',logf:'all',merge:D.merge,mistakes:0};
+  attacks:[],score:0,spent:0,events:[],notes:[],view:'home',cur:null,tab:'mon',firstAtk:null,over:false,reason:'',logf:'all',merge:D.merge,mistakes:0,hintHtml:''};
  G.servers.forEach(s=>{for(let k=0;k<60;k++)pushMetrics(s,false)});
 }
 const active=()=>G.attacks.filter(a=>!a.fixed&&!a.dead);
@@ -418,6 +430,7 @@ function resetVuln(k){
  if(k==='inject')ai.cfg.pr=clone(ai.def.pr);
  if(k==='cost')ai.cfg.cost=clone(ai.def.cost);
  if(k==='leak')ai.cfg.lg=clone(ai.def.lg);
+ if(k==='dns')sv('dns-zone').cfg.dns=clone(sv('dns-zone').def.dns);
 }
 function triggerAttack(k){if(active().some(a=>a.type===k))return;resetVuln(k);spawn(k)}
 function checkFixes(){
@@ -481,7 +494,7 @@ let lbFallback=[],lbUnavailable=false;
 function getLB(){
  let raw;
  try{raw=localStorage.getItem(LBK)}catch(e){lbUnavailable=true;return lbFallback}
- if(raw===null){return lbFallback}
+ if(raw===null){lbFallback=[];return lbFallback}
  try{const rows=JSON.parse(raw);if(Array.isArray(rows)){lbFallback=rows;return rows}}catch(e){lbUnavailable=true;return lbFallback}
  lbUnavailable=true;return lbFallback;
 }
@@ -499,18 +512,26 @@ function lbTable(f){
  return `<table><tr><th>${t('lb.rank')}</th><th>${t('lb.nick')}</th><th>${t('lb.cls')}</th><th>${t('lb.diff')}</th><th>${t('lb.seed')}</th><th>${t('lb.score')}</th><th>${t('lb.date')}</th></tr>`+
   l.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.nick)}</td><td>${esc(r.cls||'-')}</td><td>${esc(t('diff.'+(r.diff||'hard')))}</td><td>${esc(r.seed)}</td><td><b>${r.score}</b></td><td>${esc(r.date)}</td></tr>`).join('')+'</table>';
 }
-function lbControls(seed){
- return `<div class="row"><label style="min-width:auto">${t('lb.diff')}</label><select id="lbd"><option value="">${t('lb.alldiff')}</option>${['easy','normal','hard'].map(d=>`<option value="${d}">${t('diff.'+d)}</option>`).join('')}</select>`+
-  (seed?`<label style="min-width:auto"><input type="checkbox" id="lbs"> ${t('lb.sameseed')}</label>`:'')+`</div><div id="lbbox">${lbTable({})}</div>${lbNotice()}`;
+function lbControls(){
+ return `<div class="row"><label style="min-width:auto">${t('lb.diff')}</label><select id="lbd"><option value="">${t('lb.alldiff')}</option>${['easy','normal','hard'].map(d=>`<option value="${d}">${t('diff.'+d)}</option>`).join('')}</select>
+  <label style="min-width:auto"><input type="checkbox" id="lbs"> ${t('lb.sameseed')}</label></div><div id="lbbox">${lbTable({})}</div>${lbNotice()}`;
 }
 function renderLB(){
  const d=$('#lbd')?$('#lbd').value:'',sc=$('#lbs');
- $('#lbbox').innerHTML=lbTable({diff:d,seed:(sc&&sc.checked&&G)?G.seed:''});
+ const seedInput=$('#seed'),seed=G&&G.over?G.seed:seedInput?seedInput.value.trim():'';
+ $('#lbbox').innerHTML=lbTable({diff:d,seed:sc&&sc.checked?seed:''});
 }
 
 /* ========== 提示面板與通知 ========== */
-function showHint(html){const p=$('#hintpanel');p.innerHTML=`<div class="hp-h"><b>${t('hint.h')}</b><button class="btn sm sec" data-a="closehint">×</button></div>${html}`;p.style.display='block'}
-function showToast(html){const p=$('#toast');p.innerHTML=`<div class="hp-h"><span></span><button class="btn sm sec" data-a="closetoast">×</button></div>${html}`;p.style.display='block'}
+function showHint(html){
+ G.hintHtml=`<div class="hp-h"><b>${t('hint.h')}</b><button class="btn sm sec" data-a="closehint">×</button></div>${html}`;
+ const p=$('#hintpanel');if(p){p.innerHTML=G.hintHtml;p.style.display='block'}
+}
+function showToast(html){
+ clearTimeout(toastTimer);
+ const p=$('#toast');p.innerHTML=`<div class="hp-h"><span></span><button class="btn sm sec" data-a="closetoast">×</button></div>${html}`;p.style.display='block';
+ toastTimer=setTimeout(()=>{p.style.display='none';toastTimer=null},15000);
+}
 
 /* ========== 畫面 ========== */
 function renderStart(){
@@ -528,7 +549,7 @@ function renderStart(){
  <div class="row"><label>${t('start.mode')}</label><select id="mode"><option value="play">${t('start.play')}</option><option value="practice">${t('start.practice')}</option></select></div>
  <div class="row"><label>${t('start.tut')}</label><label style="min-width:0"><input type="checkbox" id="tut" checked> ${t('start.tutl')}</label></div>
  <button class="btn warn" data-a="start">${t('start.go')}</button></div>
- <div class="card"><h3>${t('start.lb')}</h3>${lbControls('')}</div></div>
+ <div class="card"><h3>${t('start.lb')}</h3>${lbControls()}</div></div>
  <div class="foot">${t('foot')}</div>`;
  updDiffDesc();
 }
@@ -536,7 +557,7 @@ function updDiffDesc(){const d=$('#diff');if(d&&$('#diffdesc'))$('#diffdesc').te
 function topHTML(){
  const base=`<span class="logo">☁ ${t('title')}</span><span style="cursor:pointer" data-a="home">${t('top.home')}</span>`;
  if(G.demo)return base+`<div class="stat"><span><b>${t('top.demo')}</b></span></div>`;
- if(G.practice)return base+`<div class="stat"><span><b>${t('top.practice')}</b></span><select id="pa">${ATK_KEYS.map(k=>`<option value="${k}">${t('layer_'+ATK[k].layer)}｜${t('atk.'+k+'.n')}</option>`).join('')}</select><button class="btn sm warn" data-a="trigger">${t('top.trigger')}</button><span>${t('top.hp')} <b id="s-hp"></b></span><button class="btn sm sec" data-a="font" title="${t('top.fonttip')}">${t('top.font')}</button><button class="btn sm red" data-a="leave">${t('top.leave')}</button></div>`;
+ if(G.practice)return base+`<div class="stat"><span><b>${t('top.practice')}</b></span><label for="pa">${t('top.pick')}</label><select id="pa">${ATK_KEYS.map(k=>`<option value="${k}">${t('layer_'+ATK[k].layer)}｜${t('atk.'+k+'.n')}</option>`).join('')}</select><button class="btn sm warn" data-a="trigger">${t('top.trigger')}</button><span>${t('top.hp')} <b id="s-hp"></b></span><button class="btn sm sec" data-a="font" title="${t('top.fonttip')}">${t('top.font')}</button><button class="btn sm red" data-a="leave">${t('top.leave')}</button></div>`;
  return base+`<div class="stat"><span>${t('top.seed')} <b>${esc(G.seed)}</b></span><span>${t('top.diff')} <b>${t('diff.'+G.diff)}</b></span><span>${t('top.left')} <b id="s-time"></b></span><span>${t('top.hp')} <b id="s-hp"></b></span><span>${t('top.budget')} <b id="s-bud"></b></span><span>${t('top.score')} <b id="s-score"></b></span><button class="btn sm sec" data-a="font" title="${t('top.fonttip')}">${t('top.font')}</button><button class="btn sm red" data-a="end">${t('top.end')}</button></div>`;
 }
 function updateTop(){
@@ -566,7 +587,8 @@ function renderConsole(){
  $('#view').innerHTML=`<div class="layout"><div class="side"><div class="grp">${t('con.g1')}</div>${mk('mon',t('con.mon'))}${mk('logs',t('con.logs')+'<span class="dot" id="dot-logs"></span>')}${mk('report',t('con.report'))}<div class="grp">${t('con.g2')}</div>${tools}${chk}</div>
  <div class="main"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><h2 style="margin:0">${t(s.nk)} <span class="mono">${s.id}</span> <span id="c-badge">${badge(s)}</span></h2>
  <div class="note">${esc(s.spec)} · ${t('con.pub')} ${esc(s.ip)} · ${t('con.priv')} ${s.priv} · ${t('con.hp')} <span id="c-hp">${Math.round(s.health)}</span>%</div></div>
- <div><button class="btn sec sm" id="hintbtn" data-a="hint">${hintLbl}</button> <button class="btn sec sm" data-a="home">${t('btn.back')}</button></div></div></div>
+ <div><button class="btn sec sm" id="hintbtn" data-a="hint">${hintLbl}</button> <button class="btn sec sm" data-a="home">${t('btn.back')}</button></div></div>
+ <div id="hintpanel" style="display:${G.hintHtml?'block':'none'}">${G.hintHtml}</div></div>
  <div id="tabbody"></div></div></div>`;
  renderTab();updateConsoleHead();
 }
@@ -653,9 +675,9 @@ function renderLogs(){
  s.susSeen=s.sus;
  const ib=$('#ipbox');
  if(ib){
-  const cnt={};s.logs.forEach(e=>{const m=e.msg.match(/(\d{1,3}(?:\.\d{1,3}){3})/);if(m&&!m[1].startsWith('10.'))cnt[m[1]]=(cnt[m[1]]||0)+1});
+  const cnt={};s.logs.forEach(e=>{const m=e.msg.match(/(?:\b(?:src|host|client)=|\bfrom\s+)(\d{1,3}(?:\.\d{1,3}){3})/i);if(m&&!m[1].startsWith('10.'))cnt[m[1]]=(cnt[m[1]]||0)+1});
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  ib.innerHTML=`<b>${t('log.ipbox')}</b>：`+(top.length?top.map(x=>`<span class="pill mono">${x[0]} × ${x[1]}</span>`).join(''):t('log.ipnone'));
+  ib.innerHTML=`<b>${t('log.ipbox')}</b>${t('ui.colon')}`+(top.length?top.map(x=>`<span class="pill mono">${x[0]} × ${x[1]}</span>`).join(' '):t('log.ipnone'));
  }
 }
 function tutText(){
@@ -678,28 +700,27 @@ function refresh(){
 
 /* ========== 工具表單 ========== */
 function sgRow(r){
- const i=sgInfo(r.proto,r.port),adv=G.D.advice;
- return `<tr class="sgrow"><td><select class="sgproto"><option value="tcp" ${r.proto==='tcp'?'selected':''}>TCP</option><option value="udp" ${r.proto==='udp'?'selected':''}>UDP</option></select></td>
- <td><input type="number" class="sgp" min="1" max="65535" value="${r.port}"></td><td><input class="sgs" value="${esc(r.src)}"></td>
+ const i=sgInfo(r.port),adv=G.D.advice;
+ return `<tr class="sgrow"><td><input type="number" class="sgp" min="1" max="65535" value="${r.port}"></td><td><input class="sgs" value="${esc(r.src)}"></td>
  <td class="sguse">${esc(i.use)}</td>${adv?`<td class="sgadv"><span class="adv adv-${i.adv}">${t('adv.'+i.adv)}</span></td>`:''}
  <td><button class="btn sm red" data-a="sgdel">${t('btn.del')}</button></td></tr>`;
 }
 function updSgRow(tr){
- const p=parseInt(tr.querySelector('.sgp').value),pr=tr.querySelector('.sgproto').value,i=sgInfo(pr,p);
+ const p=parseInt(tr.querySelector('.sgp').value),i=sgInfo(p);
  tr.querySelector('.sguse').textContent=i.use;const a=tr.querySelector('.sgadv');if(a)a.innerHTML=`<span class="adv adv-${i.adv}">${t('adv.'+i.adv)}</span>`;
 }
 const TOOLFORM={
-fw:(s,c)=>`<div class="note">${t('f.fw.note')}</div>
+fw:(s,c)=>`<div class="note">${t('f.fw.note')} ${term('syn')}</div>
  <div class="row"><label>${t('f.fw.en')}</label><input type="checkbox" id="fw-en" ${c.enabled?'checked':''}></div>
  <div class="row"><label>${t('f.fw.thr')}</label><input type="number" id="fw-thr" min="1" max="10000" value="${c.thr}"></div>
  <div class="row"><label>${t('f.fw.act')}</label><select id="fw-act"><option value="alert" ${c.action==='alert'?'selected':''}>${t('f.fw.alert')}</option><option value="block" ${c.action==='block'?'selected':''}>${t('f.fw.block')}</option></select></div>`,
 sg:(s,c)=>{
  const adv=G.D.advice,keys=Object.keys(PORTS);
- return `<div class="note">${t('f.sg.note')} ${term('cidr')}</div><div class="note">${t('sg.tcpudp')}</div>
- <table id="sgt"><tr><th>${t('th.proto')}</th><th>${t('th.port')}</th><th>${t('th.src')}</th><th>${t('th.use')}</th>${adv?`<th>${t('th.adv')}</th>`:''}<th></th></tr>${c.map(sgRow).join('')}</table>
+ return `<div class="note">${t('f.sg.note')} ${term('cidr')}</div>
+ <table id="sgt"><tr><th>${t('th.port')}</th><th>${t('th.src')}</th><th>${t('th.use')}</th>${adv?`<th>${t('th.adv')}</th>`:''}<th></th></tr>${c.map(sgRow).join('')}</table>
  <div class="row"><button class="btn sec sm" data-a="sgadd">${t('btn.addrule')}</button></div>
- <details class="help"><summary>${t('sg.ref')}</summary><div class="note">${t('sg.refnote')}</div><table class="plain"><tr><th>${t('th.proto')}</th><th>${t('th.port')}</th><th>${t('th.name')}</th>${adv?`<th>${t('th.adv')}</th>`:''}</tr>
- ${keys.map(k=>{const [pr,po]=k.split('/');return `<tr><td>${pr.toUpperCase()}</td><td>${po}</td><td>${esc(t('port.'+k))}</td>${adv?`<td><span class="adv adv-${PORTS[k]}">${t('adv.'+PORTS[k])}</span></td>`:''}</tr>`}).join('')}</table></details>`;
+ <details class="help"><summary>${t('sg.ref')}</summary><div class="note">${t('sg.refnote')}</div><table class="plain"><tr><th>${t('th.port')}</th><th>${t('th.name')}</th>${adv?`<th>${t('th.adv')}</th>`:''}</tr>
+ ${keys.map(po=>{const k='tcp/'+po;return `<tr><td>${po}</td><td>${esc(t('port.'+k))}</td>${adv?`<td><span class="adv adv-${PORTS[po]}">${t('adv.'+PORTS[po])}</span></td>`:''}</tr>`}).join('')}</table></details>`;
 },
 eip:(s,c)=>`<div class="note">${t('f.eip.note')} ${term('eip')}　${term('nat')}</div>
  <div class="row"><label>${t('f.eip.st')}</label><b>${c.bound?t('f.eip.bound',{ip:c.ip}):t('f.eip.unbound')}</b></div>
@@ -736,12 +757,17 @@ function afterApply(tool){
 
 /* ========== 事件處理 ========== */
 function startGame(){
- const nick=($('#nick').value||'').trim().slice(0,12)||'同學',cls=($('#cls').value||'').trim().slice(0,6),seed=($('#seed').value||String(ri(1000,9999))).trim().slice(0,12);
- const diff=$('#diff').value,practice=$('#mode').value==='practice';
+ const nick=($('#nick').value||'').trim().slice(0,12)||t('start.defaultnick'),cls=($('#cls').value||'').trim().slice(0,6),seed=($('#seed').value||String(ri(1000,9999))).trim().slice(0,12);
+ const selected=$('#diff').value,diff=DIFF[selected]?selected:'easy',practice=$('#mode').value==='practice';
  hidePanels();newGame({nick,cls,seed,diff,practice,tut:$('#tut').checked});renderShell();updateTop();renderHome();renderBanner();startTimer();
 }
-function hidePanels(){$('#hintpanel').style.display='none';$('#toast').style.display='none'}
-const sgRows=()=>[...document.querySelectorAll('.sgrow')].map(r=>({proto:r.querySelector('.sgproto').value,port:parseInt(r.querySelector('.sgp').value),src:r.querySelector('.sgs').value.trim()}));
+function hidePanels(){
+ const hint=$('#hintpanel');if(hint)hint.style.display='none';
+ const toast=$('#toast');toast.style.display='none';
+ clearTimeout(toastTimer);toastTimer=null;
+ if(G)G.hintHtml='';
+}
+const sgRows=()=>[...document.querySelectorAll('.sgrow')].map(r=>({port:Number(r.querySelector('.sgp').value),src:r.querySelector('.sgs').value.trim()}));
 const H={
 start:startGame,
 tour(){startTour()},
@@ -749,16 +775,21 @@ home(){if(!G||G.over)return;G.view='home';G.cur=null;renderHome();renderBanner()
 open(el){G.view='console';G.cur=el.dataset.id;G.tab='mon';renderConsole();renderBanner()},
 tab(el){G.tab=el.dataset.tab;renderConsole();renderBanner()},
 font(){document.body.classList.toggle('big')},
-closehint(){$('#hintpanel').style.display='none'},
-closetoast(){$('#toast').style.display='none'},
+closehint(){G.hintHtml='';const p=$('#hintpanel');if(p)p.style.display='none'},
+closetoast(){const p=$('#toast');p.style.display='none';clearTimeout(toastTimer);toastTimer=null},
 logf(el){G.logf=el.dataset.m;document.querySelectorAll('[data-a=logf]').forEach(b=>b.classList.toggle('on',b.dataset.m===G.logf));renderLogs()},
-trigger(){triggerAttack($('#pa').value);refresh()},
+trigger(){
+ const type=$('#pa').value;
+ if(active().some(a=>a.type===type))showToast(`<p>${esc(t('prac.duplicate'))}</p>`);
+ else triggerAttack(type);
+ refresh();
+},
 leave(){if(confirm(t('end.confirmleave'))){stopTimer();G=null;hidePanels();renderStart()}},
 hint(){
  const D=G.D,a=active().find(x=>x.target===G.cur);
  if(!a){showHint(`<p>${esc(active().length&&D.feedback?t('hint.other'):t('hint.none'))}</p>`);return}
  if(a.hint<D.hintLv){a.hint++;if(a.hint===3)a.hint3=true;if(D.hintCost)addEv(t('ev.hint'),-D.hintCost)}
- let h='';for(let i=1;i<=a.hint;i++)h+=`<p><b>Lv${i}</b>：${esc(t('atk.'+a.type+'.h'+i))}</p>`;
+ let h='';for(let i=1;i<=a.hint;i++)h+=`<p><b>${esc(t('hint.level',{n:i}))}</b>${t('ui.colon')}${esc(t('atk.'+a.type+'.h'+i))}</p>`;
  if(a.hint<D.hintLv)h+=`<p class="note">${esc(a.hint===2&&D.hintLv===3?t('hint.lv3warn'):t('hint.more'))}</p>`;else h+=`<p class="note">${esc(t('hint.max'))}</p>`;
  showHint(h);updateTop();
 },
@@ -770,21 +801,27 @@ report(){
  updateTop();renderBanner();
 },
 reset(){renderToolCard(sv(G.cur),G.tab,true)},
-sgadd(){$('#sgt').insertAdjacentHTML('beforeend',sgRow({proto:'tcp',port:443,src:'0.0.0.0/0'}))},
+sgadd(){$('#sgt').insertAdjacentHTML('beforeend',sgRow({port:443,src:'0.0.0.0/0'}))},
 sgdel(el){el.closest('tr').remove()},
 'ap-fw'(){
- const thr=parseInt($('#fw-thr').value);if(!(thr>=1)){msg(false,t('val.thr'));return}
+ const thr=Number($('#fw-thr').value);if(!Number.isInteger(thr)||thr<1||thr>10000){msg(false,t('val.thr'));return}
  G.fw={enabled:$('#fw-en').checked,thr,action:$('#fw-act').value};
  if(G.fw.enabled&&G.fw.action==='block'&&thr<50)penalty('ev.fw',10);
  afterApply('fw');
 },
 'ap-sg'(){
  const s=sv(G.cur),rows=sgRows();
- if(rows.some(r=>!(r.port>=1&&r.port<=65535)||!r.src)){msg(false,t('val.port'));return}
+ if(rows.some(r=>!Number.isInteger(r.port)||r.port<1||r.port>65535||!validCidr(r.src))){msg(false,t('val.sg'));return}
  s.cfg.sg=rows;
- const pub=(proto,port)=>rows.some(r=>r.proto===proto&&r.port===port&&openSrc(r.src));
- if(s.id==='web-01'&&(!pub('tcp',80)||!pub('tcp',443)))penalty('ev.web',10);
- if(s.id==='db-01'&&pub('tcp',3306))penalty('ev.db',10);
+ const hasSrc=(port,sources)=>rows.some(r=>r.port===port&&sources.includes(r.src.trim()));
+ const publicOpen=port=>hasSrc(port,['0.0.0.0/0']);
+ if(s.id==='web-01'&&(!publicOpen(80)||!publicOpen(443)))penalty('ev.web',10);
+ if(s.id==='api-gw'&&!publicOpen(443))penalty('ev.apiweb',10);
+ if(s.id==='ai-bot'&&!hasSrc(443,['10.0.0.0/16','0.0.0.0/0']))penalty('ev.aiweb',10);
+ if(s.id==='db-01'){
+  if(!hasSrc(3306,['10.0.0.0/16']))penalty('ev.dbinternal',10);
+  if(publicOpen(3306))penalty('ev.db',10);
+ }
  afterApply('sg');
 },
 'ap-eip'(){
@@ -794,21 +831,26 @@ sgdel(el){el.closest('tr').remove()},
 },
 'ap-dns'(){
  const s=sv(G.cur);document.querySelectorAll('.dnsv').forEach(i=>{s.cfg.dns[+i.dataset.i].value=i.value.trim()});
- if(s.cfg.dns[1].value!=='203.0.113.20')penalty('ev.dnsapi',10);
+ const dnsAttackActive=active().some(a=>a.type==='dns'&&a.target==='dns-zone');
+ const wrongRecord=s.cfg.dns.some(r=>(r.host==='www'&&r.value!=='203.0.113.10')||(r.host==='api'&&r.value!=='203.0.113.20'));
+ if(!dnsAttackActive&&wrongRecord)penalty('ev.dnsbad',10);
  afterApply('dns');
 },
 'ap-rl'(){
- const s=sv(G.cur),lim=parseInt($('#rl-lim').value);if(!(lim>=1)){msg(false,t('val.num'));return}
+ const s=sv(G.cur),lim=Number($('#rl-lim').value);if(!Number.isInteger(lim)||lim<1||lim>100000){msg(false,t('val.num'));return}
  s.cfg.rl={enabled:$('#rl-en').checked,limit:lim};
  if(s.cfg.rl.enabled&&lim<5)penalty('ev.rl',10);
  afterApply('rl');
 },
 'ap-pr'(){
- const s=sv(G.cur);s.cfg.pr={scope:$('#pr-sc').checked,block:$('#pr-bl').checked,maxLen:parseInt($('#pr-len').value)||2000,kw:$('#pr-kw').value.slice(0,200)};
+ const s=sv(G.cur),rawMax=parseInt($('#pr-len').value,10),maxLen=Number.isFinite(rawMax)?rawMax:2000;
+ s.cfg.pr={scope:$('#pr-sc').checked,block:$('#pr-bl').checked,maxLen,kw:$('#pr-kw').value.slice(0,200)};
+ if(maxLen<100)penalty('ev.prshort',5);
  afterApply('pr');
 },
 'ap-cost'(){
  const s=sv(G.cur);s.cfg.cost={budget:parseFloat($('#c-bud').value)||0,alert:parseInt($('#c-al').value),action:$('#c-ac').value};
+ if(s.cfg.cost.budget<20&&s.cfg.cost.action==='stop')penalty('ev.coststop',5);
  afterApply('cost');
 },
 'ap-lg'(){
@@ -829,9 +871,10 @@ document.addEventListener('change',e=>{
  const c=e.target;
  if(c.id==='lbd'||c.id==='lbs')renderLB();
  else if(c.id==='diff')updDiffDesc();
- else if(c.classList&&(c.classList.contains('sgproto')||c.classList.contains('sgp')))updSgRow(c.closest('tr'));
+ else if(c.classList&&c.classList.contains('sgp'))updSgRow(c.closest('tr'));
 });
 document.addEventListener('input',e=>{const c=e.target;if(c.classList&&c.classList.contains('sgp'))updSgRow(c.closest('tr'))});
+document.addEventListener('input',e=>{if(e.target.id==='seed')renderLB()});
 
 /* ========== 介面導覽（使用示範資料，不影響正式遊戲） ========== */
 let TS={on:false,i:0};
@@ -841,13 +884,13 @@ function tgo(id,tab){
 }
 const TOUR=[
  {k:'top',sel:'#topbar',go:()=>tgo('home')},
- {k:'table',sel:'#hometable',go:()=>tgo('home')},
+ {k:'table',sel:'#hometable tr:first-child',go:()=>tgo('home')},
  {k:'status',sel:'#hometable tr:nth-child(2) td:nth-child(2)',go:()=>tgo('home')},
  {k:'notes',sel:'#notescard',go:()=>tgo('home')},
- {k:'side',sel:'.side',go:()=>tgo('web-01','mon')},
- {k:'mon',sel:'#tabbody',go:()=>tgo('web-01','mon')},
- {k:'logs',sel:'#tabbody',go:()=>tgo('web-01','logs')},
- {k:'report',sel:'#tabbody',go:()=>tgo('web-01','report')},
+ {k:'side',sel:'.side .grp:first-child',go:()=>tgo('web-01','mon')},
+ {k:'mon',sel:'#tabbody .chart:first-child',go:()=>tgo('web-01','mon')},
+ {k:'logs',sel:'#tabbody .row',go:()=>tgo('web-01','logs')},
+ {k:'report',sel:'#tabbody h3',go:()=>tgo('web-01','report')},
  {k:'fw',tool:1,go:()=>tgo('web-01','fw')},{k:'sg',tool:1,go:()=>tgo('web-01','sg')},{k:'eip',tool:1,go:()=>tgo('web-01','eip')},
  {k:'dns',tool:1,go:()=>tgo('dns-zone','dns')},{k:'rl',tool:1,go:()=>tgo('api-gw','rl')},{k:'pr',tool:1,go:()=>tgo('ai-bot','pr')},
  {k:'cost',tool:1,go:()=>tgo('ai-bot','cost')},{k:'lg',tool:1,go:()=>tgo('ai-bot','lg')},
@@ -868,7 +911,7 @@ function tourGo(i){
 function tourPlace(){
  if(!TS.on)return;
  const st=TOUR[TS.i],hole=$('#tourhole'),box=$('#tourbox');
- const el=document.querySelector(st.tool?'#tabbody>.card':st.sel);
+ const el=document.querySelector(st.tool?'#tabbody>.card>h3':st.sel);
  const title=st.tool?t('tool.'+st.k):t('tour.'+st.k+'.t');
  const body=st.tool?'<ul>'+t('guide.'+st.k).split('|').map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><p class="note">'+esc(t('tour.try'))+'</p>':'<p>'+esc(t('tour.'+st.k+'.b'))+'</p>';
  const last=TS.i>=TOUR.length-1;
@@ -914,7 +957,7 @@ function endGame(reason){
  <div class="row"><button class="btn" data-a="again">${t('end.again')}</button><button class="btn sec" data-a="restart">${t('end.back')}</button></div></div>
  <div class="card"><h3>${t('end.review')}</h3><table><tr><th>${t('end.th.layer')}</th><th>${t('end.th.atk')}</th><th>${t('end.th.res')}</th><th>${t('end.th.tool')}</th><th>${t('end.th.why')}</th></tr>${rev}</table></div>
  <div class="card"><h3>${t('end.events')}</h3><table><tr><th>${t('end.th.time')}</th><th>${t('end.th.ev')}</th><th>${t('end.th.sc')}</th></tr>${G.events.map(e=>`<tr><td>${mmss(e.t)}</td><td>${esc(e.text)}</td><td>${e.d>0?'+':''}${e.d}</td></tr>`).join('')||`<tr><td colspan="3">${t('end.noev')}</td></tr>`}</table></div>
- <div class="card"><h3>${t('end.lb')}</h3>${lbControls(G.seed)}</div></div>`;
+ <div class="card"><h3>${t('end.lb')}</h3>${lbControls()}</div></div>`;
 }
 renderStart();
 </script>
