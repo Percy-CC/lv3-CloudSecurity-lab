@@ -7,6 +7,13 @@
 
 ## 2026-10-22
 
+### v0.2.2 埠掃描日誌埠號修正
+
+- 問題：埠掃描日誌顯示 `dst_port=undefined/undefined`，不能辨識掃描目標。
+- 根本原因：`SCAN_PORTS` 已改為數字陣列，但日誌仍把每項當作 `[port, protocol]` 陣列讀取。
+- 修改：以 `${p}/tcp` 格式輸出隨機掃描埠及 TCP 協定。
+- 驗證：Node.js JavaScript 語法檢查通過；瀏覽器練習模式埠掃描產生的日誌為 `dst_port=25/tcp`、`dst_port=23/tcp`、`dst_port=8080/tcp` 等有效格式，沒有 `undefined`，Console 無 error／warning。
+
 ### v0.2.1 困難模式懲罰及 TCP 安全組
 
 變更：

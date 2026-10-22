@@ -329,7 +329,7 @@ ddos:{layer:'net',target:'web-01',tool:'fw',eff:{'web-01':{net:850,cpu:55,req:22
  log:a=>`WARN  inbound ${ri(850,980)} Mbps, SYN_RECV=${ri(8000,19000)}, distinct_src_ips=${ri(1100,1600)}`,
  fixed:()=>G.fw.enabled&&G.fw.action==='block'&&G.fw.thr<=300},
 portscan:{layer:'net',target:'web-01',tool:'sg',eff:{'web-01':{net:25,cpu:12,req:60}},
- log:a=>{const p=SCAN_PORTS[ri(0,SCAN_PORTS.length-1)];return `WARN  connection attempt dst_port=${p[0]}/${p[1]} src=${a.ip} flags=SYN (sequential ports)`},
+ log:a=>{const p=SCAN_PORTS[ri(0,SCAN_PORTS.length-1)];return `WARN  connection attempt dst_port=${p}/tcp src=${a.ip} flags=SYN (sequential ports)`},
  fixed:()=>sv('web-01').cfg.sg.every(r=>!BAD_PORTS.includes(r.port)||!openSrc(r.src))},
 ssh:{layer:'net',target:'web-01',tool:'sg',eff:{'web-01':{cpu:30,req:80}},
  log:a=>`WARN  sshd: Failed password for ${['root','admin','ubuntu','test'][ri(0,3)]} from ${a.ip} port ${ri(30000,60000)} ssh2`,
