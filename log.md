@@ -7,6 +7,14 @@
 
 ## 2026-10-22
 
+### v0.2.3 英文介面及語言切換
+
+- 新增 `I18N['en']` 英文語言包；開始畫面頂部新增 English／中文切換按鈕。
+- 以 `cs_lang` 保存語言偏好，重新載入時套用；切換會同步更新 `<html lang>` 及文件標題。
+- 排行榜日期統一使用 `en-CA` locale，顯示為 `YYYY-MM-DD`，不受介面語言影響。
+- 更新 README 及專案設計文件，說明英文介面、切換方式及語言偏好儲存。
+- 驗證：JavaScript 語法檢查通過；373 個中英文 I18N key、placeholder 及 `guide.*` 分隔符一致。瀏覽器確認英文切換、重新載入保留、切回中文時語言標記及標題還原，切換期間沒有 Console error／warning。
+
 ### v0.2.2 埠掃描日誌埠號修正
 
 - 問題：埠掃描日誌顯示 `dst_port=undefined/undefined`，不能辨識掃描目標。
@@ -147,7 +155,6 @@
 
 - [ ] 在 Chrome、Edge、Safari 及手機瀏覽器完整試玩。
 - [ ] 檢查各畫面的版面及文字是否過長。
-- [ ] 新增 `I18N['en']` 英文介面。
 - [ ] 評估排行榜上線（Cloudflare Workers + D1 或 Firebase）。
 - [ ] 加入 IAM 與 Caching 工具，配合講義。
 - [ ] 加入授權條款。
