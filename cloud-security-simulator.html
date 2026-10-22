@@ -24,7 +24,7 @@ th{background:#f7f8fa;font-weight:600;color:#555}
 .btn.sec{background:#fff;color:#1366ec;border:1px solid #1366ec}
 .btn.warn{background:#ff6a00}
 .btn.sm{padding:3px 10px;font-size:12px}
-.btn.red{background:#d93026}
+.btn.red{background:#d93026;color:#fff}
 input,select,textarea{border:1px solid #c9ced6;border-radius:3px;padding:6px 8px;background:#fff}
 input[type=number]{width:110px}
 .badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;color:#fff}
@@ -56,6 +56,16 @@ input[type=number]{width:110px}
 .msg.ok{background:#e6f7ee;color:#116b3f}.msg.err{background:#fdecea;color:#a31d14}
 .foot{text-align:center;color:#8a919c;font-size:12px;padding:14px}
 .tabs button{margin-right:6px}
+@media(max-width:680px){
+ .top{height:auto;min-height:48px;flex-wrap:wrap;padding:8px 12px;gap:10px}
+ .top .stat{width:100%;margin-left:0;gap:8px}
+ .layout{display:block}
+ .side{width:100%;display:flex;flex-wrap:wrap;border-right:0;border-bottom:1px solid #e3e6eb}
+ .side .grp{flex-basis:100%}
+ .side a{display:inline-block;padding:8px 10px}
+ .main{padding:10px}
+ table{display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
+}
 </style>
 </head>
 <body>
@@ -96,7 +106,8 @@ tut1:'步驟 1：找出狀態為「警告」的伺服器，按「管理」進入
 tut_wrong:'這部伺服器看起來沒有問題。請返回首頁，找出狀態為「警告」的伺服器。',
 tut2:'步驟 2：查看「概覽監控」的圖表（紅色數字代表異常）及「日誌查看」，判斷攻擊類型，然後到「回報事件」選擇。',
 tut3:'步驟 3：已回報。請在左側選單找出可以阻止此攻擊的工具，修改設定後按「套用」。（可使用「提示」，每次扣 3 分）',
-};}
+'lb.storageError':'瀏覽器無法存取本機儲存空間；排行榜記錄只保留至頁面關閉。'
+}};
 let lang='zh-Hant';
 function t(k,p){let s=(I18N[lang]&&I18N[lang][k])||I18N['zh-Hant'][k]||k;if(p)for(const x in p)s=s.split('{'+x+'}').join(p[x]);return s}
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -227,6 +238,8 @@ function tick(){
  else if(!G.queue.length&&!active().length)endGame('done');
  refresh();
 }
+function stopTimer(){clearInterval(window._tk);window._tk=null}
+function startTimer(){stopTimer();window._tk=setInterval(tick,1000)}
 function status(s){
  if(s.health<=0||s.off)return 'off';
  if(s.health<35)return 'bad';
@@ -237,8 +250,19 @@ const avgHealth=()=>G.servers.reduce((x,s)=>x+s.health,0)/G.servers.length;
 
 /* ========== 排行榜（localStorage） ========== */
 const LBK='cs_lb';
-const getLB=()=>{try{return JSON.parse(localStorage.getItem(LBK))||[]}catch(e){return[]}};
-function saveLB(r){const l=getLB();l.push(r);localStorage.setItem(LBK,JSON.stringify(l.slice(-300)))}
+let lbFallback=[],lbUnavailable=false;
+function getLB(){
+ let raw;
+ try{raw=localStorage.getItem(LBK)}catch(e){lbUnavailable=true;return lbFallback}
+ if(raw===null){lbFallback=[];return lbFallback}
+ try{const rows=JSON.parse(raw);if(Array.isArray(rows)){lbFallback=rows;return rows}}catch(e){lbUnavailable=true;return lbFallback}
+ lbUnavailable=true;return lbFallback;
+}
+function saveLB(r){
+ const rows=getLB();rows.push(r);lbFallback=rows.slice(-300);
+ try{localStorage.setItem(LBK,JSON.stringify(lbFallback))}catch(e){lbUnavailable=true}
+}
+function lbNotice(){return lbUnavailable?`<div class="note">${t('lb.storageError')}</div>`:''}
 function lbTable(seedFilter){
  let l=getLB();if(seedFilter)l=l.filter(r=>String(r.seed)===String(seedFilter));
  l.sort((a,b)=>b.score-a.score);l=l.slice(0,10);
@@ -261,7 +285,7 @@ function renderStart(){
  <div class="row"><label>種子 (Seed)</label><input id="seed" maxlength="12" value="${seed}"></div>
  <div class="row"><label>教學模式</label><label style="min-width:0"><input type="checkbox" id="tut" checked> 開啟引導提示</label></div>
  <button class="btn warn" data-a="start">開始模擬</button></div>
- <div class="card"><h3>排行榜（本機 Top 10）</h3>${lbTable()}</div></div>
+ <div class="card"><h3>排行榜（本機 Top 10）</h3>${lbTable()}${lbNotice()}</div></div>
  <div class="foot">${t('sub')}。本頁沒有連接任何真實雲端服務。</div>`;
 }
 function topHTML(){
@@ -406,7 +430,7 @@ const H={
 start(){
  const nick=($('#nick').value||'同學').trim().slice(0,12)||'同學',cls=($('#cls').value||'').trim().slice(0,6),seed=($('#seed').value||String(ri(1000,9999))).trim().slice(0,12);
  newGame({nick,cls,seed,tut:$('#tut').checked});renderShell();updateTop();renderHome();renderBanner();
- clearInterval(window._tk);window._tk=setInterval(tick,1000);
+ startTimer();
 },
 home(){if(!G||G.over)return;G.view='home';G.cur=null;renderHome();renderBanner()},
 open(el){G.view='console';G.cur=el.dataset.id;G.tab='mon';renderConsole();renderBanner()},
@@ -474,7 +498,7 @@ sgdel(el){el.closest('tr').remove()},
 },
 end(){if(confirm('確定要結束模擬並查看結果？'))endGame('quit')},
 restart(el){renderStart()},
-again(){const sd=G.seed,n=G.nick,c=G.cls,tu=G.tut;newGame({seed:sd,nick:n,cls:c,tut:tu});renderShell();updateTop();renderHome();renderBanner();clearInterval(window._tk);window._tk=setInterval(tick,1000)},
+again(){const sd=G.seed,n=G.nick,c=G.cls,tu=G.tut;newGame({seed:sd,nick:n,cls:c,tut:tu});renderShell();updateTop();renderHome();renderBanner();startTimer()},
 lball(){$('#lbbox').innerHTML=lbTable()},
 lbseed(){$('#lbbox').innerHTML=lbTable(G.seed)}
 };
@@ -482,7 +506,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
 
 /* ========== 結束畫面 ========== */
 function endGame(reason){
- if(G.over)return;G.over=true;G.reason=reason;clearInterval(window._tk);
+ if(G.over)return;G.over=true;G.reason=reason;stopTimer();
  const hp=Math.round(avgHealth()),bud=Math.max(0,Math.round(START_BUDGET-G.spent));
  const done=!G.queue.length&&!active().length;
  const bHealth=hp*2,bBudget=Math.floor(bud/10),bDone=(done&&reason!=='health'&&reason!=='budget')?50:0;
@@ -501,7 +525,7 @@ function endGame(reason){
  <div class="row"><button class="btn" data-a="again">以相同種子重玩</button><button class="btn sec" data-a="restart">返回開始畫面</button></div></div>
  <div class="card"><h3>攻擊回顧</h3><table><tr><th>層次</th><th>攻擊</th><th>結果</th><th>正確工具</th><th>原理</th></tr>${rev}</table></div>
  <div class="card"><h3>操作記錄</h3><table><tr><th>時間</th><th>事件</th><th>分數</th></tr>${G.events.map(e=>`<tr><td>${mmss(e.t)}</td><td>${esc(e.text)}</td><td>${e.d>0?'+':''}${e.d}</td></tr>`).join('')||'<tr><td colspan="3">沒有記錄</td></tr>'}</table></div>
- <div class="card"><h3>排行榜</h3><div class="row"><button class="btn sec sm" data-a="lbseed">同一種子</button><button class="btn sec sm" data-a="lball">全部</button></div><div id="lbbox">${lbTable(G.seed)}</div></div></div>`;
+ <div class="card"><h3>排行榜</h3><div class="row"><button class="btn sec sm" data-a="lbseed">同一種子</button><button class="btn sec sm" data-a="lball">全部</button></div><div id="lbbox">${lbTable(G.seed)}</div>${lbNotice()}</div></div>`;
 }
 renderStart();
 </script>
