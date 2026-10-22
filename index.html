@@ -74,7 +74,7 @@ input[type=number]{width:110px}
 'use strict';
 /* ========== i18n（日後可新增 en 語言包） ========== */
 const I18N={'zh-Hant':{
-title:'雲端安全模擬器',sub:'模擬器，與阿里雲無關',
+title:'雲端安全模擬器',sub:'模擬器',
 'srv.web':'網站伺服器','srv.api':'API 閘道','srv.ai':'AI 聊天機械人 App','srv.db':'資料庫 (RDS)','srv.dns':'域名解析 (DNS)',
 st_ok:'運行中',st_warn:'警告',st_bad:'異常',st_off:'已離線',
 layer_net:'網絡層',layer_app:'應用層',
@@ -115,7 +115,7 @@ const $=s=>document.querySelector(s);
 const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let x=Math.imul(a^a>>>15,1|a);x=x+Math.imul(x^x>>>7,61|x)^x;return((x^x>>>14)>>>0)/4294967296}}
 function hashSeed(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
-const GAME_SEC=600,START_BUDGET=1000;
+const GAME_SEC=300,START_BUDGET=1000;
 const openSrc=s=>['0.0.0.0/0','0.0.0.0','*','any'].includes(String(s).trim().toLowerCase());
 const mmss=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
 
